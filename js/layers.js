@@ -16,6 +16,7 @@ addLayer("p", {
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
+        mult = mult.mul(player.m.points.add(1))
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -224,6 +225,8 @@ addLayer("m", {
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
+        moonCostA: new Decimal(12), //Planet cost
+        moonCostB: new Decimal(2500) //Matter cost
     }},
     color: "gray",
     requires: new Decimal(10), // Can be a function that takes requirement increases into account
@@ -233,8 +236,14 @@ addLayer("m", {
     type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
-        mult = new Decimal(1)
+        let mult = new Decimal(1)
         return mult
+    },
+    infoboxes: {
+        info: {
+            title: "Information|Moons",
+            body: "This is the moon layer, this is a side layer for faster progression to row 1+ resets.<br>The buff from moons is simple: Moons+1, which means 3 moons = x4 planets."
+        }
     },
     branches: ["p", "s"],
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -244,6 +253,28 @@ addLayer("m", {
     hotkeys: [
         {key: "m", description: "[M] Buy a moon", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
+    tabFormat: [
+        "main-display",
+        "buyables",
+        ["infobox", "info"],
+    ],
+    buyables: {
+        11: {
+            title: "Buy a moon",
+            cost(x) { return new Decimal(500).mul(x.pow(2)) },
+            display() { return `Cost: ${format(this.cost())} matter` },
+            canAfford() { return player.points.gte(this.cost()) },
+            buy() {
+                player.points = player.points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+        },
+    },
+    componentStyles: {
+        "buyable"() { return {'height': '100px', 'width': '160px'} },
+    },
+    effect() {return player.m.points.add(1)},
+    effectDescription() {return "which multiply planet gain by <h2 style='color: gray; text-shadow: gray 0px 0px 10px'>"+format(player.m.points.add(1))+"x</h2>"},
     layerShown(){return hasMilestone("s", 4)}
 })
 
