@@ -1,12 +1,12 @@
 let modInfo = {
-	name: "The ??? Tree",
-	author: "nobody",
-	pointsName: "points",
+	name: "The Universal Tree",
+	author: "voidcons0le/plutonium",
+	pointsName: "matter",
 	modFiles: ["layers.js", "tree.js"],
 
 	discordName: "",
 	discordLink: "",
-	initialStartPoints: new Decimal (10), // Used for hard resets and new players
+	initialStartPoints: new Decimal (0), // Used for hard resets and new players
 	offlineLimit: 1,  // In hours
 }
 
@@ -42,6 +42,10 @@ function getPointGen() {
 		return new Decimal(0)
 
 	let gain = new Decimal(1)
+	if (hasUpgrade("p", 11)) gain = gain.mul(2)
+	if (hasUpgrade("p", 12)) gain = gain.mul(3)
+	if (hasMilestone("s", 0)) gain = gain.mul(2.5)
+	if (hasMilestone("s", 1)) gain = gain.mul(2)
 	return gain
 }
 

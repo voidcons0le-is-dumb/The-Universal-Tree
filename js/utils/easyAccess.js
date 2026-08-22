@@ -22,6 +22,20 @@ function challengeCompletions(layer, id) {
 	return (player[layer].challenges[id])
 }
 
+function instantGain(layer, x) {
+    let targetLayer = layer; // Change to your layer's exact ID
+    
+    // 1. Convert your raw input into a Decimal
+    let amount = new Decimal(x);
+    
+    // 2. Multiply by the layer's gainMult and raise to the gainExp
+    // This replicates TMT's core normal-layer formula structure
+    let finalGain = amount.times(tmp[targetLayer].gainMult).pow(tmp[targetLayer].gainExp);
+    
+    // 3. Directly push the processed value to your player save data
+    player[targetLayer].points = player[targetLayer].points.add(finalGain);
+}
+
 function canEnterChallenge(layer, id){
 	return tmp[layer].challenges[id].canEnter ?? true
 }

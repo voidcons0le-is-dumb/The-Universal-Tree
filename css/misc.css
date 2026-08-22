@@ -79,5 +79,8 @@
 }
 
 .hl {
-	border-top: 3px solid var(--color);
+	border-top: 2px dashed #fff4;
+    border-bottom: 0;
+    border-left: 0;
+    border-right: 0;
 }
