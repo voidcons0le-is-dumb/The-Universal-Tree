@@ -17,6 +17,7 @@ addLayer("p", {
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
         mult = mult.mul(player.m.points.add(1))
+        mult = mult.mul(tmp.r.effect)
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -215,6 +216,12 @@ addLayer("s", {
             done() {return player.s.points.gte(1000)},
             unlocked() {return hasUpgrade("m", 13)}
         },
+        7: {
+            requirementDescription: "100,000,000 stars",
+            effectDescription: "Unlock Stardust.",
+            done() {return player.s.points.gte(100e6)},
+            unlocked() {return hasUpgrade("r", 13)}
+        },
     },
     tabFormat: [
         "main-display",
@@ -236,10 +243,8 @@ addLayer("m", {
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
-        moonCostA: new Decimal(12), //Planet cost
-        moonCostB: new Decimal(2500) //Matter cost
     }},
-    color: "gray",
+    color: "darkgray",
     requires: new Decimal(10), // Can be a function that takes requirement increases into account
     resource: "moons", // Name of prestige currency
     baseResource: "matter", // Name of resource prestige is based on
@@ -248,6 +253,7 @@ addLayer("m", {
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         let mult = new Decimal(1)
+        mult = mult.mul(tmp.r.effect)
         return mult
     },
     doReset(resettingLayer) {
@@ -260,7 +266,7 @@ addLayer("m", {
     infoboxes: {
         info: {
             title: "Information|Moons",
-            body: "This is the moon layer, this is a side layer for faster progression to row 1+ resets.<br>The buff from moons is simple: Moons+1, which means 3 moons = x4 planets.<br>You can also use planets to upgrade moons here."
+            body: "This is the moon layer, this is a side layer for faster progression to row 1+ resets.<br>The buff from moons is simple: Moons+1, which means 3 moons = x4 planets.<br>You can also use planets to upgrade here."
         }
     },
     branches: ["p", "s"],
@@ -276,19 +282,22 @@ addLayer("m", {
         "buyables",
         ["infobox", "info"],
         "upgrades",
+        "clickables"
     ],
     buyables: {
         11: {
             title: "Buy a moon",
-            cost(x) { return new Decimal(500).mul(x.pow(2)).pow(1.14) },
+            cost(x) { return new Decimal(500).mul(x.pow(2)) },
             display() { return `Cost: ${format(this.cost())} matter` },
             canAfford() { return player.points.gte(this.cost()) },
             buy() {
-                player.points = player.points.sub(this.cost())
+                if (!hasUpgrade("r", 12)) {
+                    player.points = player.points.sub(this.cost())
+                }
                 instantGain("m", 1)
                 setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
             },
-            tooltip: "Cost scaling: 500*(Amount<sup>2</sup>)<sup>1.14</sup>",
+            tooltip: "Cost scaling: 500*(Amount<sup>2</sup>)",
         },
     },
     componentStyles: {
@@ -296,11 +305,11 @@ addLayer("m", {
     },
     automate() {
         if (canBuyBuyable("m", 11) && hasUpgrade("m", 14)) {
-            buyMaxBuyable("m", 11)
+            buyBuyable("m", 11)
         }
     },
     effect() {return player.m.points.add(1)},
-    effectDescription() {return "which multiply planet gain by <h2 style='color: gray; text-shadow: gray 0px 0px 10px'>"+format(player.m.points.add(1))+"x</h2>"},
+    effectDescription() {return "which multiply planet gain by <h2 style='color: darkgray; text-shadow: darkgray 0px 0px 10px'>"+format(player.m.points.add(1))+"x</h2>"},
     layerShown(){return hasMilestone("s", 4)},
     upgrades: {
         11: {
@@ -308,37 +317,37 @@ addLayer("m", {
             description: "Yay!!!! Stars boost matter.",
             cost: new Decimal(25),
             effect() {return player.s.points.pow(0.6)},
-            effectDisplay() {return 'x'+format(player.s.points.pow(0.6))},
+            effectDisplay() {return 'x'+format(player.s.points.pow(0.6).add(1))},
             currencyDisplayName: "planets",
             currencyInternalName: "points",
             currencyLayer: "p",
-            tooltip: "Stars<sup>0.6</sup>"
+            tooltip: "Stars<sup>0.6</sup>+1"
         },
         12: {
             title: "More-er upgrades!!!!",
             description: "Moons boost matter.",
             cost: new Decimal(50),
             effect() {return player.m.points.pow(0.7)},
-            effectDisplay() {return 'x'+format(player.m.points.pow(0.7))},
+            effectDisplay() {return 'x'+format(player.m.points.pow(0.7).add(1))},
             currencyDisplayName: "planets",
             currencyInternalName: "points",
             currencyLayer: "p",
-            tooltip: "Moons<sup>0.7</sup>"
+            tooltip: "Moons<sup>0.7</sup>+1"
         },
         13: {
-            title: "More-est upgrades!!!!!",
-            description: "I'm running out of ideas.<br>Planets boost matter",
-            cost: new Decimal(90),
-            effect() {return player.p.points.pow(0.45).add(1)},
-            effectDisplay() {return 'x'+format(player.p.points.pow(0.45).add(1))},
+            title: "More-est upgrades!!!!",
+            description: "Planets boost matter.",
+            cost: new Decimal(5000),
+            effect() {return player.p.points.pow(0.25).add(1)},
+            effectDisplay() {return 'x'+format(player.p.points.pow(0.25).add(1))},
             currencyDisplayName: "planets",
             currencyInternalName: "points",
             currencyLayer: "p",
-            tooltip: "Planets<sup>0.45</sup>+1"
+            tooltip: "Planets<sup>0.25</sup>+1"
         },
         14: {
-            title: "Oh god",
-            description: "Autobuy moons",
+            title: "Automation",
+            description: "Auto-buy moons.",
             cost: new Decimal(1e9),
             currencyDisplayName: "planets",
             currencyInternalName: "points",
@@ -350,17 +359,94 @@ addLayer("m", {
 addLayer("r", {
     name: "rings", // This is optional, only used in a few places, If absent it just uses the layer id.
     symbol: "R", // This appears on the layer's node. Default is the id with the first letter capitalized
-    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    position: 1, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
     }},
     color: "goldenrod",
-    requires: new Decimal(10), // Can be a function that takes requirement increases into account
+    requires: new Decimal(50), // Can be a function that takes requirement increases into account
     resource: "rings", // Name of prestige currency
     baseResource: "moons", // Name of resource prestige is based on
     baseAmount() {return player.m.points}, // Get the current amount of baseResource
     type: "static", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 2, // Prestige currency exponent
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    branches: ["p", "m"],
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    row: 1, // Row the layer is in on the tree (0 is the first row)
+    hotkeys: [
+        {key: "r", description: "[R] Reset moons for rings", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+    ],
+    upgrades: {
+        11: {
+            title: "More planets!",
+            description: "Moon upgrades? Wow!!! Rings also boost planets with their effect",
+            cost: new Decimal(100),
+            currencyDisplayName: "moons",
+            currencyInternalName: "points",
+            currencyLayer: "m",
+        },
+        12: {
+            title: "Theivery",
+            description: "Buying moons no longer takes your matter.",
+            cost: new Decimal(500),
+            currencyDisplayName: "moons",
+            currencyInternalName: "points",
+            currencyLayer: "m",
+        },
+        13: {
+            title: "I need the boosts",
+            description: "SQUARE the ring effect (you don't get a ton anyway)",
+            cost: new Decimal(5000),
+            currencyDisplayName: "moons",
+            currencyInternalName: "points",
+            currencyLayer: "m",
+        },
+        13: {
+            title: "Next layer-ish!",
+            description: "Unlock a new Milestone in star layer<br>This is requirement to have 4 rings",
+            cost: new Decimal(0),
+            canAfford() {return player.r.points.gte(4)},
+        }
+    },
+    layerShown(){return hasMilestone("s", 6)},
+    effect() {
+        let effect = player.r.points.add(1)
+        if (hasUpgrade("r", 13)) {
+            effect = effect.pow(2)
+        }
+        return effect
+    },
+    effectDescription() { 
+        let effect = player.r.points.add(1)
+        if (hasUpgrade("r", 13)) {
+            effect = effect.pow(2)
+        }
+        if (!hasUpgrade("r", 11)) { return "which multiply moon gain by <h2 style='color: goldenrod; text-shadow: goldenrod 0px 0px 10px'>"+format(effect)+"x</h2>"} else {return "which multiply moon and planet gain by <h2 style='color: goldenrod; text-shadow: goldenrod 0px 0px 10px'>"+format(effect)+"x</h2>"}
+     },
+})
+
+addLayer("sd", {
+    name: "stardust", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "SD", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(0),
+    }},
+    color: "#ff629e",
+    branches: ["s", "r"],
+    requires: new Decimal(500e6), // Can be a function that takes requirement increases into account
+    resource: "stardust", // Name of prestige currency
+    baseResource: "stars", // Name of resource prestige is based on
+    baseAmount() {return player.s.points}, // Get the current amount of baseResource
+    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
@@ -369,11 +455,11 @@ addLayer("r", {
     gainExp() { // Calculate the exponent on main currency from bonuses
         return new Decimal(1)
     },
-    row: 0, // Row the layer is in on the tree (0 is the first row)
+    row: 2, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "r", description: "[R] Reset moons for rings", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+        {key: "d", description: "[D] Dustify(?) your stars for stardust", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
-    layerShown(){return true}
+    layerShown(){return hasMilestone("s", 7)}
 })
 
 addLayer("a", {
