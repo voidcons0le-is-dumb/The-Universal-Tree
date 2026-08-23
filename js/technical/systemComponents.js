@@ -173,6 +173,7 @@ var systemComponents = {
 				</tr> 
 			<tr>
                 <td><button class="opt" onclick="toggleOpt('hideMilestonePopups')">Show Milestone Popups: {{ formatOption(!options.hideMilestonePopups) }}</button></td>
+				<td><button class="opt" onclick="changeNotation()">Notation: {{ options.notation.toUpperCase() }}</button></td>
             </tr>
         </table>`
     },
@@ -220,4 +221,3 @@ var systemComponents = {
 	}
 
 }
-

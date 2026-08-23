@@ -15,6 +15,7 @@ function getStartOptions() {
 		oldStyle: false,
 		forceTooltips: true,
 		hideMilestonePopups: false,
+		notation: "standard",
 	}
 }
 
@@ -50,6 +51,13 @@ function toggleAuto(toggle) {
 const MS_DISPLAYS = ["ALL", "LAST, AUTO, INCOMPLETE", "AUTOMATION, INCOMPLETE", "INCOMPLETE", "NONE"];
 
 const MS_SETTINGS = ["always", "last", "automation", "incomplete", "never"];
+
+const NOTATIONS = ["standard", "scientific", "engineering", "letters"];
+
+function changeNotation() {
+	let current = NOTATIONS.indexOf(options.notation);
+	options.notation = NOTATIONS[(current + 1) % NOTATIONS.length];
+}
 
 function adjustMSDisp() {
 	options.msDisplay = MS_SETTINGS[(MS_SETTINGS.indexOf(options.msDisplay) + 1) % 5];

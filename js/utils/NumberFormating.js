@@ -40,36 +40,101 @@ function sumValues(x) {
     return x.reduce((a, b) => Decimal.add(a, b))
 }
 
+// ===============================
+// NumberFormatting.js for TMT
+// Standard, Scientific, Engineering, Letters
+// Short-illions up to 10^3003+
+// ===============================
+
+// --- Short-illion arrays for STANDARD notation ---
+const ONES = ["", "Un", "Do", "Tr", "Qa", "Qi", "Sx", "Sp", "Oc", "No"];
+const TENS = ["", "Dc", "Vg", "Tg", "Qd", "Qt", "Sx", "Sp", "Oc", "No"];
+const HUNDREDS = ["", "Ce", "UCe", "DCe", "TCe", "QaCe", "QiCe", "SxCe", "SpCe", "OcCe"];
+
+// --- Get suffix for a given tier ---
+function getIllionSuffix(tier) {
+    const BASE = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+    if (tier < BASE.length) return BASE[tier];
+
+    const hundredsDigit = Math.floor(tier / 100);
+    const tensDigit = Math.floor((tier % 100) / 10);
+    const onesDigit = tier % 10;
+
+    return (ONES[onesDigit] || "") + (TENS[tensDigit] || "") + (HUNDREDS[hundredsDigit] || "");
+}
+
+// --- Main format dispatcher ---
 function format(decimal, precision = 2, small) {
-    small = small || modInfo.allowSmall
-    decimal = new Decimal(decimal)
+    small = small || modInfo.allowSmall;
+    decimal = new Decimal(decimal);
+
     if (isNaN(decimal.sign) || isNaN(decimal.layer) || isNaN(decimal.mag)) {
         player.hasNaN = true;
-        return "NaN"
+        return "NaN";
     }
-    if (decimal.sign < 0) return "-" + format(decimal.neg(), precision, small)
-    if (decimal.mag == Number.POSITIVE_INFINITY) return "Infinity"
-    if (decimal.gte("eeee1000")) {
-        var slog = decimal.slog()
-        if (slog.gte(1e6)) return "F" + format(slog.floor())
-        else return Decimal.pow(10, slog.sub(slog.floor())).toStringWithDecimalPlaces(3) + "F" + commaFormat(slog.floor(), 0)
-    }
-    else if (decimal.gte("1e1000000")) return exponentialFormat(decimal, 0, false)
-    else if (decimal.gte("1e10000")) return exponentialFormat(decimal, 0)
-    else if (decimal.gte(1e9)) return exponentialFormat(decimal, precision)
-    else if (decimal.gte(1e3)) return commaFormat(decimal, 0)
-    else if (decimal.gte(0.0001) || !small) return regularFormat(decimal, precision)
-    else if (decimal.eq(0)) return (0).toFixed(precision)
 
-    decimal = invertOOM(decimal)
-    let val = ""
-    if (decimal.lt("1e1000")){
-        val = exponentialFormat(decimal, precision)
-        return val.replace(/([^(?:e|F)]*)$/, '-$1')
-    }
-    else   
-        return format(decimal, precision) + "⁻¹"
+    if (decimal.sign < 0) return "-" + format(decimal.neg(), precision, small);
+    if (decimal.mag === Number.POSITIVE_INFINITY) return "Infinity";
 
+    if (decimal.gte(1e6)) return formatByNotation(decimal, precision);
+    if (decimal.gte(1e3)) return commaFormat(decimal, 0);
+    if (decimal.gte(0.0001) || !small) return regularFormat(decimal, precision);
+    if (decimal.eq(0)) return (0).toFixed(precision);
+
+    // Tiny numbers
+    decimal = invertOOM(decimal);
+    return exponentialFormat(decimal, precision);
+}
+
+// --- Dispatch to selected notation ---
+function formatByNotation(decimal, precision = 2) {
+    const notation = options.notation || "standard";
+    switch (notation) {
+        case "scientific":
+            return exponentialFormat(decimal, precision);
+        case "engineering":
+            return formatEngineering(decimal, precision);
+        case "letters":
+            return formatLetters(decimal, precision);
+        case "standard":
+        default:
+            return formatStandard(decimal, precision);
+    }
+}
+
+// --- STANDARD (short illion) ---
+function formatStandard(decimal, precision = 2) {
+    if (decimal.lt(1e3)) return regularFormat(decimal, precision);
+
+    const tier = Math.floor(decimal.log10().div(3).floor().toNumber());
+    const mantissa = decimal.div(Decimal.pow(10, tier * 3));
+    const suffix = getIllionSuffix(tier);
+
+    return mantissa.toStringWithDecimalPlaces(precision) + suffix;
+}
+
+// --- ENGINEERING ---
+function formatEngineering(decimal, precision = 2) {
+    const exp = decimal.log10().div(3).floor().mul(3);
+    const mantissa = decimal.div(Decimal.pow(10, exp));
+    return mantissa.toStringWithDecimalPlaces(precision) + "e" + exp.toStringWithDecimalPlaces(0);
+}
+
+// --- LETTERS ---
+function formatLetters(decimal, precision = 2) {
+    const tier = Math.floor(decimal.log10().div(3).floor().toNumber());
+    const mantissa = decimal.div(Decimal.pow(10, tier * 3));
+    const letters = getLetters(tier);
+    return mantissa.toStringWithDecimalPlaces(precision) + letters;
+}
+
+function getLetters(index) {
+    let str = "";
+    while (index >= 0) {
+        str = String.fromCharCode(65 + (index % 26)) + str;
+        index = Math.floor(index / 26) - 1;
+    }
+    return str;
 }
 
 function formatWhole(decimal) {
