@@ -210,7 +210,7 @@ addLayer("s", {
     milestones: {
         0: {
             requirementDescription: "1 star",
-            effectDescription: "Your matter gain is multiplied by 2.5",
+            effectDescription: "Your matter gain is multiplied by 2.5, also keep this layer",
             done() {return player.s.points.gte(1)}
         },
         1: {
@@ -261,7 +261,7 @@ addLayer("s", {
         "blank",
         "milestones"
     ],
-    layerShown(){return hasUpgrade('p', 14)}
+    layerShown(){return hasUpgrade('p', 14) || hasMilestone("s", 0)}
 })
 
 addLayer("m", {
@@ -350,7 +350,7 @@ addLayer("m", {
         }
         return "which multiply planet gain by <h2 style='color: darkgray; text-shadow: darkgray 0px 0px 10px'>"+format(effect)+"x</h2>"
     },
-    layerShown(){return hasMilestone("s", 4)},
+    layerShown(){return hasMilestone("s", 4) || hasAchievement("a", 15)},
     upgrades: {
         11: {
             title: "More upgrades!!!",
@@ -455,7 +455,7 @@ addLayer("r", {
             canAfford() {return player.r.points.gte(4)},
         }
     },
-    layerShown(){return hasMilestone("s", 6)},
+    layerShown(){return hasMilestone("s", 6) || hasAchievement("a", 21)},
     effect() {
         let effect = player.r.points.add(1)
         if (hasUpgrade("r", 13)) {
@@ -511,7 +511,7 @@ addLayer("sd", {
     hotkeys: [
         {key: "d", description: "[D] Dustify(?) your stars for stardust", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
-    layerShown(){return hasMilestone("s", 7)}
+    layerShown(){return hasMilestone("s", 7) || hasAchievement("a", 24)}
 })
 
 addLayer("a", {
