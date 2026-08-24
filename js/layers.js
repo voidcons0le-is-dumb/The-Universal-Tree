@@ -241,13 +241,13 @@ addLayer("s", {
         6: {
             requirementDescription: "1,000 stars",
             effectDescription: "Unlock Rings.",
-            done() {return player.s.points.gte(1000)},
+            done() {return player.s.points.gte(1000) && hasUpgrade("m", 13)},
             unlocked() {return hasUpgrade("m", 13)}
         },
         7: {
             requirementDescription: "100,000,000 stars",
             effectDescription: "Unlock Stardust.",
-            done() {return player.s.points.gte(100e6)},
+            done() {return player.s.points.gte(100e6) && hasUpgrade("r", 13)},
             unlocked() {return hasUpgrade("r", 13)}
         },
     },
@@ -606,7 +606,7 @@ addLayer("a", {
         },
         26: {
             name: "+ULTRARICODUST",
-            done() { return player.sd.points.gte(10) },
+            done() { return player.sd.points.gte(3) },
             tooltip: "Get 3 stardust (ENDGAME)",
         },
     },
