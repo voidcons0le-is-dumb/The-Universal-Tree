@@ -96,7 +96,7 @@ addLayer("p", {
     hotkeys: [
         {key: "z", description: "[Z] Add 1 Matter (planets)", onPress(){clickClickable("p", 11)}},
         {key: "x", description: "[X] Add 25% Matter (planets)", onPress(){clickClickable("p", 12)}},
-        {key: "c", description: "[Z] Add 100% Matter (planets)", onPress(){clickClickable("p", 13)}},
+        {key: "c", description: "[C] Add 100% Matter (planets)", onPress(){clickClickable("p", 13)}},
     ],
     upgrades: {
         11: {
@@ -158,7 +158,7 @@ addLayer("s", {
     color: "khaki",
     requires: new Decimal(8), // Can be a function that takes requirement increases into account
     resource: "stars", // Name of prestige currency
-    baseResource: "points", // Name of resource prestige is based on
+    baseResource: "matter", // Name of resource prestige is based on
     baseAmount() {return player.p.points}, // Get the current amount of baseResource
     type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
@@ -250,7 +250,7 @@ addLayer("m", {
     resource: "moons", // Name of prestige currency
     baseResource: "matter", // Name of resource prestige is based on
     baseAmount() {return player.points}, // Get the current amount of baseResource
-    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    type: "none", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         let mult = new Decimal(1)
@@ -289,7 +289,7 @@ addLayer("m", {
     buyables: {
         11: {
             title: "Buy a moon",
-            cost(x) { return new Decimal(500).mul(x.pow(2)) },
+            cost(x) { return new Decimal(500).mul(player.m.points.pow(2)) },
             display() { return `Cost: ${format(this.cost())} matter` },
             canAfford() { return player.points.gte(this.cost()) },
             buy() {
@@ -329,7 +329,7 @@ addLayer("m", {
             title: "More upgrades!!!",
             description: "Yay!!!! Stars boost matter.",
             cost: new Decimal(25),
-            effect() {return player.s.points.pow(0.6)},
+            effect() {return player.s.points.pow(0.6).add(1)},
             effectDisplay() {return 'x'+format(player.s.points.pow(0.6).add(1))},
             currencyDisplayName: "planets",
             currencyInternalName: "points",
@@ -340,7 +340,7 @@ addLayer("m", {
             title: "More-er upgrades!!!!",
             description: "Moons boost matter.",
             cost: new Decimal(50),
-            effect() {return player.m.points.pow(0.7)},
+            effect() {return player.m.points.pow(0.7).add(1)},
             effectDisplay() {return 'x'+format(player.m.points.pow(0.7).add(1))},
             currencyDisplayName: "planets",
             currencyInternalName: "points",
@@ -406,7 +406,7 @@ addLayer("r", {
             currencyLayer: "m",
         },
         12: {
-            title: "Theivery",
+            title: "Thievery",
             description: "Buying moons no longer takes your matter.",
             cost: new Decimal(500),
             currencyDisplayName: "moons",
@@ -540,7 +540,47 @@ addLayer("a", {
         14: {
             name: "Time for stars",
             done() { return hasUpgrade('p', 14) && player.p.points.gte(8) },
-            tooltip: "Buy every planet upgrade",
+            tooltip: "Buy every planet upgrade, and have 8 planets (enough for stars)",
+        },
+        15: {
+            name: "Lunar",
+            done() { return player.s.points.gte(10) },
+            tooltip: "Unlock moon layer",
+        },
+        16: {
+            name: "Full Moon",
+            done() { return player.m.points.gte(1000) },
+            tooltip: "Have 1,000 Moons",
+        },
+        21: {
+            name: "Ring thing?",
+            done() { return player.r.points.gte(1) },
+            tooltip: "Have a ring on your planet",
+        },
+        22: {
+            name: "Planet X",
+            done() { return player.r.points.gte(2) },
+            tooltip: "Have 2 rings on your planet",
+        },
+        23: {
+            name: "Not quite J1407b",
+            done() { return player.r.points.gte(4) },
+            tooltip: "Have 4 rings on your planet",
+        },
+        24: {
+            name: "Eat my dust",
+            done() { return player.sd.points.gte(1) },
+            tooltip: "Get your first stardust",
+        },
+        25: {
+            name: "Another one bites the dust",
+            done() { return player.sd.points.gte(2) },
+            tooltip: "Have 2 stardust",
+        },
+        26: {
+            name: "+ULTRARICODUST",
+            done() { return player.sd.points.gte(10) },
+            tooltip: "Get 3 stardust (ENDGAME)",
         },
     },
 })
@@ -592,8 +632,5 @@ addLayer("minigame", {
         }
     },
     row: "side", // Row the layer is in on the tree (0 is the first row)
-    hotkeys: [
-        {key: "p", description: "P: Reset for prestige points", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
-    ],
     layerShown(){return true}
 })
