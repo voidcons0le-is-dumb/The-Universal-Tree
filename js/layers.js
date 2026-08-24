@@ -162,6 +162,8 @@ addLayer("p", {
                 "blank",
                 ["display-text", function() {return "You have put <span class='planets'><h2>"+ player.p.matterDeposited +" / 50</h2></span> matter"}],
                 "blank",
+                ["display-text", function() {return "You have <span id='points'><h2>"+ format(player.points) +"</h2></span> unused matter"}],
+                "blank",
                 "clickables",
                 "blank",
                 ["display-text", "Planet Upgrades"],
