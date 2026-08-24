@@ -43,6 +43,14 @@ addLayer("p", {
                     player.p.matterDeposited = new Decimal(0)
                 }
             },
+            onHold() {
+                player.p.matterDeposited = player.p.matterDeposited.add(1)
+                player.points = player.points.sub(1)
+                if (player.p.matterDeposited.gte(50)) {
+                    instantGain("p", 1)
+                    player.p.matterDeposited = new Decimal(0)
+                }
+            },
             canClick() {return player.points.gte(1)},
             style: {
                 "border-radius":"15px"
@@ -52,6 +60,16 @@ addLayer("p", {
             title: "Add 25% Matter",
             display: "Hotkey: [X]",
             onClick() {
+                let added = player.points.div(4).floor()
+                player.p.matterDeposited = player.p.matterDeposited.add(added)
+                player.points = player.points.mul(0.75)
+                if (player.p.matterDeposited.gte(50)) {
+                    let gains = player.p.matterDeposited.div(50).floor()
+                    instantGain("p", gains)
+                    player.p.matterDeposited = player.p.matterDeposited.sub(gains.mul(50))
+                }
+            },
+            onHold() {
                 let added = player.points.div(4).floor()
                 player.p.matterDeposited = player.p.matterDeposited.add(added)
                 player.points = player.points.mul(0.75)
@@ -79,6 +97,15 @@ addLayer("p", {
                     player.p.matterDeposited = player.p.matterDeposited.sub(gains.mul(50))
                 }
             },
+            onHold() {
+                player.p.matterDeposited = player.p.matterDeposited.add(player.points.floor())
+                player.points = new Decimal(0)
+                if (player.p.matterDeposited.gte(50)) {
+                    let gains = player.p.matterDeposited.div(50).floor()
+                    instantGain("p", gains)
+                    player.p.matterDeposited = player.p.matterDeposited.sub(gains.mul(50))
+                }
+            },
             canClick() {return player.points.gte(10)},
             unlocked() {return hasMilestone("s", 3)},
             style: {
@@ -89,7 +116,7 @@ addLayer("p", {
     infoboxes: {
         info: {
             title: "Information|Planets",
-            body: "This game is not like most other TMT games, because I tried to make something unique with this game. <br>Your first objective is to make a planet, which requires 50 matter. Click the [Grow planet] button to add 1 matter to the planet.",
+            body: "This game is not like most other TMT games, because I tried to make something unique with this game. <br>Your first objective is to make a planet, which requires 50 matter. Click the [Grow planet] button to add 1 matter to the planet.<br><i>Tip: If you're on mobile, you can hold the buttons</i>",
         }
     },
     row: 0, // Row the layer is in on the tree (0 is the first row)
