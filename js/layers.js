@@ -482,7 +482,7 @@ addLayer("sd", {
     },
     row: 1, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "d", description: "[D] Dustify(?) your stars for stardust generators", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+        {key: "d", description: "[D] Dustify(?) your stars for stardust", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
     layerShown(){return hasMilestone("s", 7)}
 })
