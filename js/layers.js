@@ -18,6 +18,7 @@ addLayer("p", {
         mult = new Decimal(1)
         mult = mult.mul(player.m.points.add(1))
         mult = mult.mul(tmp.r.effect)
+        if (hasMilestone("sd", 0)) mult = mult.mul(100)
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
@@ -149,7 +150,7 @@ addLayer("p", {
 addLayer("s", {
     name: "stars", // This is optional, only used in a few places, If absent it just uses the layer id.
     symbol: "S", // This appears on the layer's node. Default is the id with the first letter capitalized
-    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    position: 1, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
@@ -254,6 +255,7 @@ addLayer("m", {
     gainMult() { // Calculate the multiplier for main currency from bonuses
         let mult = new Decimal(1)
         mult = mult.mul(tmp.r.effect)
+        if (hasMilestone("sd", 0)) mult = mult.mul(100)
         return mult
     },
     doReset(resettingLayer) {
@@ -308,8 +310,19 @@ addLayer("m", {
             buyBuyable("m", 11)
         }
     },
-    effect() {return player.m.points.add(1)},
-    effectDescription() {return "which multiply planet gain by <h2 style='color: darkgray; text-shadow: darkgray 0px 0px 10px'>"+format(player.m.points.add(1))+"x</h2>"},
+    effect() {
+        let effect = player.m.points.add(1)
+        if (hasMilestone("sd", 1)) {
+            effect = effect.pow(2)
+        }
+    },
+    effectDescription() {
+        let effect = player.m.points.add(1)
+        if (hasMilestone("sd", 1)) {
+            effect = effect.pow(2)
+        }
+        return "which multiply planet gain by <h2 style='color: darkgray; text-shadow: darkgray 0px 0px 10px'>"+format(effect)+"x</h2>"
+    },
     layerShown(){return hasMilestone("s", 4)},
     upgrades: {
         11: {
@@ -359,7 +372,7 @@ addLayer("m", {
 addLayer("r", {
     name: "rings", // This is optional, only used in a few places, If absent it just uses the layer id.
     symbol: "R", // This appears on the layer's node. Default is the id with the first letter capitalized
-    position: 1, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    position: 2, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
@@ -441,13 +454,13 @@ addLayer("sd", {
 		points: new Decimal(0),
     }},
     color: "#ff629e",
-    branches: ["s", "r"],
+    branches: ["s", "r", "p"],
     requires: new Decimal(500e6), // Can be a function that takes requirement increases into account
     resource: "stardust", // Name of prestige currency
     baseResource: "stars", // Name of resource prestige is based on
     baseAmount() {return player.s.points}, // Get the current amount of baseResource
-    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
-    exponent: 0.5, // Prestige currency exponent
+    type: "static", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 4, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
         return mult
@@ -455,9 +468,21 @@ addLayer("sd", {
     gainExp() { // Calculate the exponent on main currency from bonuses
         return new Decimal(1)
     },
-    row: 2, // Row the layer is in on the tree (0 is the first row)
+    milestones: {
+        0: {
+            requirementDescription: "1 stardust",
+            effectDescription: "x100 planets and moons",
+            done() {return player.sd.points.gte(1)}
+        },
+        1: {
+            requirementDescription: "3 stardust",
+            effectDescription: "SQUARE the moon multiplier on planets, also unlock Solar Systems (ENDGAME)",
+            done() {return player.sd.points.gte(3)}
+        }
+    },
+    row: 1, // Row the layer is in on the tree (0 is the first row)
     hotkeys: [
-        {key: "d", description: "[D] Dustify(?) your stars for stardust", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
+        {key: "d", description: "[D] Dustify(?) your stars for stardust generators", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
     layerShown(){return hasMilestone("s", 7)}
 })
@@ -538,11 +563,11 @@ addLayer("minigame", {
         return mult
     },
     tabFormat: {
-        "Calculator": {
+        "Plinko": {
             content: [
                 ["display-text", function() {return '<h2 style="color: #fff; text-shadow: #fff 0px 0px 10px">plinko in tmt lmao</h2>'}],
                 "blank",
-                ["raw-html", "<iframe src='./Plinko.html' style='width: 480px; height: 360px; border: none;'></iframe>"]
+                ["raw-html", "<iframe src='https://voidcons0le.github.io/plinko/Plinko' style='width: 480px; height: 360px; border: none;'></iframe>"]
             ]
         }
     },
