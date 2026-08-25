@@ -748,7 +748,8 @@ addLayer("e", {
     milestones: {
         0: {
             requirementDescription: "100 eclipse tokens (endgame)",
-            effectDescription: "You got the endgame yippee"
+            effectDescription: "You got the endgame yippee",
+            done() {return player.e.points.gte(100)}
         }
     },
     layerShown(){return hasUpgrade("ss", 15)}
