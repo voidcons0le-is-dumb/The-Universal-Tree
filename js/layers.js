@@ -151,6 +151,11 @@ addLayer("p", {
         },
     },
     layerShown(){return true},
+    automate() {
+        if (player.points.gte(4) && hasUpgrade("ss", 12) && player.ss.autoPlanet === true) {
+            clickClickable("p", 12)
+        }
+    },
     tabFormat: {
         "Main": {
             content: [
@@ -193,10 +198,20 @@ addLayer("s", {
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
+        if (hasUpgrade("ss", 11)) mult = mult.mul(10)
+        mult = mult.div(Decimal.pow(2, getBuyableAmount("e", 21)))
+        mult = mult.mul(Decimal.pow(3, getBuyableAmount("e", 22)))
         return mult
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
         return new Decimal(1)
+    },
+    doReset(resettingLayer) {
+       if (layers[resettingLayer].row <= this.row) return;
+    
+       let keep = [];
+       if (hasUpgrade("ss", 13)) keep.push("milestones");
+       layerDataReset(this.layer, keep);
     },
     row: 1, // Row the layer is in on the tree (0 is the first row)
     branches: ["p"],
@@ -249,14 +264,14 @@ addLayer("s", {
         7: {
             requirementDescription: "100,000,000 stars",
             effectDescription: "Unlock Stardust.",
-            done() {return player.s.points.gte(100e6) && hasUpgrade("r", 13)},
-            unlocked() {return hasUpgrade("r", 13)}
+            done() {return player.s.points.gte(100e6) && hasUpgrade("r", 14)},
+            unlocked() {return hasUpgrade("r", 14)}
         },
     },
     tabFormat: [
         "main-display",
         "prestige-button",
-        "infoboxes",
+        ["infobox", "info"],
         ["display-text", "Star Milestones"],
         "blank",
         "h-line",
@@ -282,9 +297,11 @@ addLayer("m", {
     type: "none", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
-        let mult = new Decimal(1)
+        mult = new Decimal(1)
         mult = mult.mul(tmp.r.effect)
         if (hasMilestone("sd", 0)) mult = mult.mul(100)
+        mult = mult.mul(Decimal.pow(3, getBuyableAmount("e", 21)))
+        mult = mult.div(Decimal.pow(2, getBuyableAmount("e", 22)))
         return mult
     },
     doReset(resettingLayer) {
@@ -406,6 +423,13 @@ addLayer("r", {
         unlocked: true,
 		points: new Decimal(0),
     }},
+    doReset(resettingLayer) {
+       if (layers[resettingLayer].row <= this.row) return;
+    
+       let keep = [];
+       if (hasMilestone("s", 2)) keep.push("upgrades");
+       layerDataReset(this.layer, keep);
+    },
     color: "goldenrod",
     requires: new Decimal(50), // Can be a function that takes requirement increases into account
     resource: "rings", // Name of prestige currency
@@ -450,7 +474,7 @@ addLayer("r", {
             currencyInternalName: "points",
             currencyLayer: "m",
         },
-        13: {
+        14: {
             title: "Next layer-ish!",
             description: "Unlock a new Milestone in star layer<br>This is requirement to have 4 rings",
             cost: new Decimal(0),
@@ -490,6 +514,13 @@ addLayer("sd", {
     baseAmount() {return player.s.points}, // Get the current amount of baseResource
     type: "static", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 4, // Prestige currency exponent
+    doReset(resettingLayer) {
+       if (layers[resettingLayer].row <= this.row) return;
+    
+       let keep = [];
+       if (hasMilestone("s", 2)) keep.push("milestones");
+       layerDataReset(this.layer, keep);
+    },
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
         return mult
@@ -514,6 +545,161 @@ addLayer("sd", {
         {key: "d", description: "[D] Dustify(?) your stars for stardust", onPress(){if (canReset(this.layer)) doReset(this.layer)}},
     ],
     layerShown(){return hasMilestone("s", 7) || hasAchievement("a", 24)}
+})
+
+addLayer("ss", {
+    name: "solar systems", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "SS", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(0),
+        autoPlanet: false
+    }},
+    color: "#abff8a",
+    requires: new Decimal(1e15), // Can be a function that takes requirement increases into account
+    resource: "solar systems", // Name of prestige currency
+    baseResource: "stars", // Name of resource prestige is based on
+    baseAmount() {return player.s.points}, // Get the current amount of baseResource
+    type: "normal", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    exponent: 0.45, // Prestige currency exponent
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    branches: [
+        "sd", "s", "r"
+    ],
+    clickables: {
+        11: {
+            title() {return player.ss.autoPlanet ? "Planet Automation: ON" : "Planet Automation: OFF"},
+            display: "Hotkey: [P]",
+            onClick() {
+                if (player.ss.autoPlanet === true) {
+                    player.ss.autoPlanet = false
+                } else {
+                    player.ss.autoPlanet = true
+                }
+            },
+            canClick() {return true},
+            unlocked() {return hasUpgrade("ss", 12)},
+            style: {
+                "height":"100px",
+                "width":"200px"
+            }
+        }
+    },
+    row: 2, // Row the layer is in on the tree (0 is the first row)
+    hotkeys: [
+        {key: "p", description: "[P] Toggle planet automation in solar system layer", onPress(){if (hasUpgrade("ss", 12)) {clickClickable("ss", 11)}}},
+    ],
+    layerShown(){return hasMilestone("sd", 1) || hasAchievement("a", 31)},
+    upgrades: {
+        11: {
+            title: "Automation²",
+            description() {if (hasUpgrade("ss", 1)) { 
+                    return "Autobuy moons now buys max, and you only pay for the last level(!!!), Also this one's free cuz I'm such a nice guy" 
+                } else {
+                    return "Just kidding! That would be unbalanced (lol) Here, take x10 stars instead"
+                }
+            },
+            cost: new Decimal(0)
+        },
+        12: {
+            title: "Full Auto",
+            description: 'Autoclicks "Add 25% Matter" button 10 times / second, and it is always unlocked.',
+            cost: new Decimal(1)
+        },
+        13: {
+            title: "Persistency",
+            description: 'Keep star milestones and ring upgrades on row 2 reset',
+            cost: new Decimal(5)
+        },
+        14: {
+            title: "Persistency again",
+            description: 'Keep stardust milestones on row 2 reset',
+            cost: new Decimal(10)
+        },
+        15: {
+            title: "Interesting",
+            description: 'Unlock eclipse layer',
+            cost: new Decimal(939837234)
+        },
+    },
+})
+
+addLayer("e", {
+    name: "eclipse", // This is optional, only used in a few places, If absent it just uses the layer id.
+    symbol: "E", // This appears on the layer's node. Default is the id with the first letter capitalized
+    position: 0, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
+    startData() { return {
+        unlocked: true,
+		points: new Decimal(1),
+    }},
+    color: "#67316e",
+    resource: "eclipse tokens", // Name of prestige currency
+    type: "none", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
+    gainMult() { // Calculate the multiplier for main currency from bonuses
+        mult = new Decimal(1)
+        return mult
+    },
+    branches: [
+        "ss", "sd", "s"
+    ],
+    gainExp() { // Calculate the exponent on main currency from bonuses
+        return new Decimal(1)
+    },
+    buyables: {
+        // Buy eclipse tokens
+        11: {
+            title: ""
+        },
+        // Eclipse buyables
+        21: {
+            title: "Solar Eclipse",
+            cost(x) {return x.add(1).pow(1.5).floor()},
+            display() { 
+                return "\n<h3>x3</h3> moon gain\n<h3>/2</h3> star gain\n\nCost: " + formatWhole(this.cost()) + " eclipse tokens\nAmount: " + formatWhole(getBuyableAmount(this.layer, this.id))
+            },
+            style: {
+                "width":"200px",
+                "height":"140px"
+            },
+            canAfford() {
+                return player.e.points.gte(this.cost()) 
+            },
+            buy() {
+                player.e.points = player.e.points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+        },
+        22: {
+            title: "Lunar Eclipse",
+            cost(x) {return x.add(1).pow(1.5).floor()},
+            display() { 
+                return "\n<h3>x3</h3> star gain\n<h3>/2</h3> moon gain\n\nCost: " + formatWhole(this.cost()) + " eclipse tokens\nAmount: " + formatWhole(getBuyableAmount(this.layer, this.id))
+            },
+            style: {
+                "width":"200px",
+                "height":"140px"
+            },
+            canAfford() {
+                return player.e.points.gte(this.cost()) 
+            },
+            buy() {
+                player.e.points = player.e.points.sub(this.cost())
+                setBuyableAmount(this.layer, this.id, getBuyableAmount(this.layer, this.id).add(1))
+            },
+        }
+    },
+    row: 2, // Row the layer is in on the tree (0 is the first row)
+    hotkeys: [
+        
+    ],
+    layerShown(){return true}
 })
 
 addLayer("a", {
@@ -609,21 +795,31 @@ addLayer("a", {
         26: {
             name: "+ULTRARICODUST",
             done() { return player.sd.points.gte(3) },
-            tooltip: "Get 3 stardust (ENDGAME)",
+            tooltip: "Get 3 stardust",
+        },
+        31: {
+            name: "Unique achievement name here",
+            done() { return player.sd.points.gte(3) },
+            tooltip: "Get 1 solar system",
+        },
+        32: {
+            name: "Tomfoolery",
+            done() { return hasUpgrade("ss", 11) },
+            tooltip: "Get trolled by solar system upgrade 11",
         },
     },
 })
 
-addLayer("minigame", {
+addLayer("pl", {
     name: "minigame", // This is optional, only used in a few places, If absent it just uses the layer id.
-    symbol: "PNK", // This appears on the layer's node. Default is the id with the first letter capitalized
+    symbol: "PL", // This appears on the layer's node. Default is the id with the first letter capitalized
     position: 1, // Horizontal position within a row. By default it uses the layer id and sorts in alphabetical order
     startData() { return {
         unlocked: true,
 		points: new Decimal(0),
-        rarityIndex: new Decimal(1)
     }},
-    color: "#2d2530",
+    color: "#444",
+    resource: "tokens",
     requires: new Decimal(10), // Can be a function that takes requirement increases into account
     type: "none", // normal: cost to gain currency depends on amount gained. static: cost depends on how much you already have
     exponent: 0.5, // Prestige currency exponent
@@ -631,34 +827,24 @@ addLayer("minigame", {
         mult = new Decimal(1)
         return mult
     },
+    infoboxes: {
+        info: {
+            title: "Plinko Minigame",
+            body: "Depending on which color you land on, you will get more or less tokens.<br>Spend tokens on token upgrades for multipliers and stuff<br><br>The multipliers from right to left are:<br><h3>x10, x5, x3, x2, x1, x0.5, </h3>"
+        },
+    },
     tabFormat: {
         "Plinko": {
             content: [
-                ["display-text", function() {return '<h2 style="color: #fff; text-shadow: #fff 0px 0px 10px">plinko in tmt lmao</h2>'}],
+                "main-display",
                 "blank",
-                ["raw-html", "<iframe src='https://voidcons0le.github.io/plinko/Plinko' style='width: 480px; height: 360px; border: none;'></iframe>"]
+                ["raw-html", "<iframe src='https://voidcons0le.github.io/plinko/Plinko' style='width: 480px; height: 360px; border: none;'></iframe>"],
+                ["infobox", "info"]
             ]
-        }
+        },
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
         return new Decimal(1)
-    },
-    clickables: {
-        11: {
-            title: "+1",
-            canClick() {return true},
-            onClick() {player.minigame.number = player.minigame.number.add(1)}
-        },
-        12: {
-            title: "*2",
-            canClick() {return true},
-            onClick() {player.minigame.number = player.minigame.number.mul(2)}
-        },
-        13: {
-            title: "Reset",
-            canClick() {return true},
-            onClick() {player.minigame.number = new Decimal(1)}
-        }
     },
     row: "side", // Row the layer is in on the tree (0 is the first row)
     layerShown(){return true}

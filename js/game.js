@@ -397,6 +397,20 @@ function hardReset(resetOptions) {
 	window.location.reload();
 }
 
+function instantGain(layer, x) {
+    let targetLayer = layer; // Change to your layer's exact ID
+    
+    // 1. Convert your raw input into a Decimal
+    let amount = new Decimal(x);
+    
+    // 2. Multiply by the layer's gainMult and raise to the gainExp
+    // This replicates TMT's core normal-layer formula structure
+    let finalGain = amount.times(tmp[targetLayer].gainMult).pow(tmp[targetLayer].gainExp);
+    
+    // 3. Directly push the processed value to your player save data
+    player[targetLayer].points = player[targetLayer].points.add(finalGain);
+}
+
 var ticking = false
 
 var interval = setInterval(function() {
@@ -434,3 +448,15 @@ var interval = setInterval(function() {
 }, 50)
 
 setInterval(function() {needCanvasUpdate = true}, 500)
+
+window.addEventListener("message", (e) => {
+  // 1. Security Check: ensure it comes from the TurboWarp parent container
+  // if (e.source !== window.parent || e.source === window) return;
+
+  // 2. Add the TurboWarp variable value (e.data) directly to the player's points
+  // TMT's .add() automatically converts strings like "10" or numbers into large game decimals
+  instantGain("pl", new Decimal(e.data))
+
+  // 3. Force TMT to update the user interface and point counters immediately
+  updateValueDisplay(); 
+});
