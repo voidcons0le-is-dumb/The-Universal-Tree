@@ -80,7 +80,7 @@ addLayer("p", {
                 }
             },
             canClick() {return player.points.gte(4)},
-            unlocked() {return hasUpgrade('p', 13) || hasMilestone("s", 1)},
+            unlocked() {return hasUpgrade('p', 13) || hasMilestone("s", 1) || hasUpgrade("ss", 12)},
             style: {
                 "border-radius":"15px"
             }
@@ -666,8 +666,8 @@ addLayer("e", {
                 return player.s.points.gte(100e15) 
             },
             buy() {
-                player.s.points = player.s.points.sub(100e15)
-                instantGain("e", 1)
+                instantGain("e", player.s.points.div(100e15).floor())
+                player.s.points = player.s.points.sub(player.s.points.div(100e15).floor().mul(100e15))
             },
         },
         12: {
