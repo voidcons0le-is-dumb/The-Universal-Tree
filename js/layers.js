@@ -626,7 +626,7 @@ addLayer("ss", {
         15: {
             title: "Interesting",
             description: 'Unlock eclipse layer',
-            cost: new Decimal(939837234)
+            cost: new Decimal(50)
         },
     },
 })
@@ -655,7 +655,53 @@ addLayer("e", {
     buyables: {
         // Buy eclipse tokens
         11: {
-            title: ""
+            title: "Stars > E$",
+            cost: new Decimal(100e15),
+            display: "\nCost: "+format(new Decimal(100e15))+" stars\n+1 eclipse token",
+            style: {
+                "width":"150px",
+                "height":"100px"
+            },
+            canAfford() {
+                return player.s.points.gte(100e15) 
+            },
+            buy() {
+                player.s.points = player.s.points.sub(100e15)
+                instantGain("e", 1)
+            },
+        },
+        12: {
+            title: "Moons > E$",
+            cost: new Decimal(5e6),
+            display: "\nCost: "+format(new Decimal(5e6))+" moons\n+1 eclipse token",
+            style: {
+                "width":"150px",
+                "height":"100px"
+            },
+            canAfford() {
+                return player.m.points.gte(5e6) 
+            },
+            buy() {
+                player.m.points = player.m.points.sub(5e6)
+                instantGain("e", 1)
+            },
+        },
+        13: {
+            title: "Tokens > E$",
+            cost: new Decimal(1e6),
+            display: "\nCost: "+format(new Decimal(1e6))+" plinko tokens\n+1 eclipse token",
+            style: {
+                "width":"150px",
+                "height":"100px"
+            },
+            canAfford() {
+                return player.pl.points.gte(1e6) 
+            },
+            buy() {
+                player.pl.points = player.pl.points.sub(1e6)
+                instantGain("e", 1)
+            },
+            unlocked() {return hasUpgrade("pl", 21)}
         },
         // Eclipse buyables
         21: {
@@ -699,7 +745,13 @@ addLayer("e", {
     hotkeys: [
         
     ],
-    layerShown(){return true}
+    milestones: {
+        0: {
+            requirementDescription: "100 eclipse tokens (endgame)",
+            effectDescription: "You got the endgame yippee"
+        }
+    },
+    layerShown(){return hasUpgrade("ss", 15)}
 })
 
 addLayer("a", {
@@ -825,12 +877,20 @@ addLayer("pl", {
     exponent: 0.5, // Prestige currency exponent
     gainMult() { // Calculate the multiplier for main currency from bonuses
         mult = new Decimal(1)
+        if (hasUpgrade("pl", 11)) mult = mult.mul(3)
+        if (hasUpgrade("pl", 12)) mult = mult.mul(3)
+        if (hasUpgrade("pl", 13)) mult = mult.mul(3)
+        if (hasUpgrade("pl", 14)) mult = mult.mul(upgradeEffect("pl", 14))
+        if (hasUpgrade("pl", 15)) mult = mult.mul(upgradeEffect("pl", 15))
+        if (hasUpgrade("pl", 22)) mult = mult.mul(3)
+        if (hasUpgrade("pl", 23)) mult = mult.mul(3)
+        if (hasUpgrade("pl", 24)) mult = mult.mul(5)
         return mult
     },
     infoboxes: {
         info: {
             title: "Plinko Minigame",
-            body: "Depending on which color you land on, you will get more or less tokens.<br>Spend tokens on token upgrades for multipliers and stuff<br><br>The multipliers from right to left are:<br><h3>x10, x5, x3, x2, x1, x0.5, </h3>"
+            body: "Depending on which color you land on, you will get more or less tokens.<br>Spend tokens on token upgrades for multipliers and stuff<br><br>The multipliers from right to left are:<br><br><h3>x5, x3, x2, x1, x0.5, x0.1, x0.5, x1, x2, x3, x5</h3>"
         },
     },
     tabFormat: {
@@ -838,9 +898,74 @@ addLayer("pl", {
             content: [
                 "main-display",
                 "blank",
-                ["raw-html", "<iframe src='https://voidcons0le.github.io/plinko/Plinko' style='width: 480px; height: 360px; border: none;'></iframe>"],
-                ["infobox", "info"]
+                ["raw-html", "<iframe src='https://voidcons0le.github.io/plinko/' style='width: 480px; height: 360px; border: none;'></iframe>"],
+                ["infobox", "info"],
+                "upgrades",
             ]
+        },
+        "Roblox RNG game ripoff": {
+            content: [
+                ["display-text", "<span id='points'>Coming in the next update!!!</span>"]
+            ],
+            unlocked() {return hasUpgrade("pl", 25)}
+        }
+    },
+    upgrades: {
+        11: {
+            title: "Let's go gambling!",
+            description: "Triple your token gain",
+            cost: new Decimal(5)
+        },
+        12: {
+            title: "Aw dang it...",
+            description: "Triple your token gain again!",
+            cost: new Decimal(100)
+        },
+        13: {
+            title: "Infinite content glitch",
+            description: "Triple your token gain yet again",
+            cost: new Decimal(500)
+        },
+        14: {
+            title: "Enough of that",
+            description: "Tokens boost themselves",
+            effect() {return player.pl.points.pow(0.15).add(1)},
+            effectDisplay() {return "x"+format(player.pl.points.pow(0.15).add(1))},
+            tooltip: "Tokens<sup>0.25</sup>+1",
+            cost: new Decimal(2000)
+        },
+        15: {
+            title: "Wait a second",
+            description: "Achievements boost tokens",
+            effect() {return player.a.points.pow(0.4).add(1)},
+            effectDisplay() {return "x"+format(player.a.points.pow(0.4).add(1))},
+            tooltip: "Achievements<sup>0.4</sup>+1",
+            cost: new Decimal(5000)
+        },
+        21: {
+            title: "If this was made",
+            description: "Buy eclipse tokens with plinko tokens (if you have eclipse layer)",
+            cost: new Decimal(15000)
+        },
+        22: {
+            title: "with Scratch then",
+            description: "Triple your token gain once more",
+            cost: new Decimal(20000)
+        },
+        23: {
+            title: "how are the tokens working?",
+            description: "Triple your token gain for the definitely not last time",
+            cost: new Decimal(150000)
+        },
+        24: {
+            title: "Try not to think about it",
+            description: "Quintuple your token gain (hmm)",
+            cost: new Decimal(500000)
+        },
+        25: {
+            title: "More gambling",
+            description: "Another tab to fulfill your gambling quota",
+            cost: new Decimal(2000000)
         },
     },
     gainExp() { // Calculate the exponent on main currency from bonuses
